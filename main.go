@@ -44,6 +44,7 @@ import "C"
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"unsafe"
@@ -91,101 +92,26 @@ type tinywl struct {
 	}
 }
 
-// Seat Listener
-// Placeholder definition, replace with actual implementation
-// Adjust the event handling functions as per your requirements
-// You can leave the event handling functions empty for now
-// and implement them later as needed.
-
-//export seatHandleCapabilities
-func seatHandleCapabilities(data unsafe.Pointer, seat *C.struct_wl_seat, capabilities C.uint32_t) {
-	// Handle seat capabilities event
-}
-
-//export seatHandleName
-func seatHandleName(data unsafe.Pointer, seat *C.struct_wl_seat, name *C.char) {
-	// Handle seat name event
-}
-
 var seat_listener = C.struct_wl_seat_listener{
 	capabilities: (*[0]byte)(C.seatHandleCapabilities),
 	name:         (*[0]byte)(C.seatHandleName),
 }
 
 // Pointer Listener
-// Placeholder definition, replace with actual implementation
-// Adjust the event handling functions as per your requirements
-// You can leave the event handling functions empty for now
-// and implement them later as needed.
+type pointerListenerData struct {
+	tinywl *tinywl
+}
 
-//export pointerHandleEnter
 func pointerHandleEnter(data unsafe.Pointer, pointer *C.struct_wl_pointer, serial C.uint32_t, surface *C.struct_wl_surface, surface_x C.wl_fixed_t, surface_y C.wl_fixed_t) {
+	listenerData := (*pointerListenerData)(data)
 	// Handle pointer enter event
+	log.Printf("pointerHandleEnter: %#v", listenerData)
 }
 
-//export pointerHandleLeave
 func pointerHandleLeave(data unsafe.Pointer, pointer *C.struct_wl_pointer, serial C.uint32_t, surface *C.struct_wl_surface) {
+	listenerData := (*pointerListenerData)(data)
 	// Handle pointer leave event
-}
-
-var pointer_listener = C.struct_wl_pointer_listener{
-	enter: (*[0]byte)(C.pointerHandleEnter),
-	leave: (*[0]byte)(C.pointerHandleLeave),
-}
-
-// Keyboard Listener
-// Placeholder definition, replace with actual implementation
-// Adjust the event handling functions as per your requirements
-// You can leave the event handling functions empty for now
-// and implement them later as needed.
-
-//export keyboardHandleKeymap
-func keyboardHandleKeymap(data unsafe.Pointer, keyboard *C.struct_wl_keyboard, format C.uint32_t, fd C.int32_t, size C.uint32_t) {
-	// Handle keyboard keymap event
-}
-
-//export keyboardHandleEnter
-func keyboardHandleEnter(data unsafe.Pointer, keyboard *C.struct_wl_keyboard, serial C.uint32_t, surface *C.struct_wl_surface, keys *C.struct_wl_array) {
-	// Handle keyboard enter event
-}
-
-var keyboard_listener = C.struct_wl_keyboard_listener{
-	keymap: (*[0]byte)(C.keyboardHandleKeymap),
-	enter:  (*[0]byte)(C.keyboardHandleEnter),
-}
-
-// Touch Listener
-// Placeholder definition, replace with actual implementation
-// Adjust the event handling functions as per your requirements
-// You can leave the event handling functions empty for now
-// and implement them later as needed.
-
-//export touchHandleDown
-func touchHandleDown(data unsafe.Pointer, touch *C.struct_wl_touch, serial C.uint32_t, time C.uint32_t, surface *C.struct_wl_surface, id C.int32_t, x C.wl_fixed_t, y C.wl_fixed_t) {
-	// Handle touch down event
-}
-
-//export touchHandleUp
-func touchHandleUp(data unsafe.Pointer, touch *C.struct_wl_touch, serial C.uint32_t, time C.uint32_t, id C.int32_t) {
-	// Handle touch up event
-}
-
-var touch_listener = C.struct_wl_touch_listener{
-	down: (*[0]byte)(C.touchHandleDown),
-	up:   (*[0]byte)(C.touchHandleUp),
-}
-
-func initSeat(tinywl *tinywl) {
-	tinywl.seat = C.wl_registry_bind(tinywl.registry, C.uint32_t(tinywl.seat.id), &C.wl_seat_interface, 1)
-	C.wl_seat_add_listener(tinywl.seat, &C.seat_listener, unsafe.Pointer(tinywl))
-
-	// Retrieve capabilities
-	C.wl_pointer_add_listener(tinywl.pointer, &C.pointer_listener, unsafe.Pointer(tinywl))
-	C.wl_keyboard_add_listener(tinywl.keyboard, &C.keyboard_listener, unsafe.Pointer(tinywl))
-	C.wl_touch_add_listener(tinywl.touch, &C.touch_listener, unsafe.Pointer(tinywl))
-
-	// Set seat capabilities
-	C.wl_seat_set_capabilities(tinywl.seat, C.uint32_t(C.WL_SEAT_CAPABILITY_POINTER|C.WL_SEAT_CAPABILITY_KEYBOARD))
+	log.Printf("pointerHandleLeave: %#v", listenerData)
 }
 
 //export handlePing
@@ -252,7 +178,7 @@ func main() {
 		fmt.Println("Failed to get Wayland registry")
 		os.Exit(1)
 	}
-	C.wl_registry_add_listener(tinywl.registry, &C.registry_listener, unsafe.Pointer(tinywl))
+	git staC.wl_registry_add_listener(tinywl.registry, &C.registry_listener, unsafe.Pointer(tinywl))
 
 	// Process events until the compositor is ready
 	C.wl_display_roundtrip(tinywl.display)
