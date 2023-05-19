@@ -5,6 +5,7 @@ package main
 // #include "callbacks.h"
 // #include "listeners.h"
 import "C"
+
 import "unsafe"
 
 // Registry Listener
@@ -39,12 +40,6 @@ func shellSurfaceHandleConfigureCallback(data unsafe.Pointer, shellSurface *C.st
 //export shellSurfaceHandlePopupDoneCallback
 func shellSurfaceHandlePopupDoneCallback(data unsafe.Pointer, shellSurface *C.struct_wl_shell_surface) {
 	// Handle shell surface popup done event
-}
-
-var shell_surface_listener = C.struct_wl_shell_surface_listener{
-	ping:       (*[0]byte)(C.shellSurfaceHandlePing),
-	configure:  (*[0]byte)(C.shellSurfaceHandleConfigure),
-	popup_done: (*[0]byte)(C.shellSurfaceHandlePopupDone),
 }
 
 func initRegistry(tinywl *tinywl) {

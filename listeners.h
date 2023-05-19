@@ -10,4 +10,6 @@ void registryHandleGlobalRemove(void *data, struct wl_registry *registry, uint32
 // Shell Surface Listener
 void shellSurfaceHandlePing(void *data, struct wl_shell_surface *shell_surface, uint32_t serial);
 void shellSurfaceHandleConfigure(void *data, struct wl_shell_surface *shell_surface, uint32_t edges, int32_t width, int32_t height);
-void shellSurfaceHandlePopupDone(void *data
+void shellSurfaceHandlePopupDone(void *data, struct wl_shell_surface *shell_surface);
+
+#endif

@@ -12,15 +12,15 @@ type tinywl struct {
 }
 
 func newTinyWL() *tinywl {
-	tinywl := &tinywl{}
+	t := &tinywl{}
 
 	// Initialize fields to nil or zero values
-	tinywl.display = nil
-	tinywl.registry = nil
-	tinywl.compositor = nil
-	tinywl.shell = nil
-	tinywl.shellSurface = nil
-	tinywl.surface = nil
+	t.display = nil
+	t.registry = nil
+	t.compositor = nil
+	t.shell = nil
+	t.shellSurface = nil
+	t.surface = nil
 
-	return tinywl
+	return t
 }

@@ -1,8 +1,16 @@
 package main
 
 // #cgo CFLAGS: -I.
-// #cgo LDFLAGS: -L. -lcallbacks
+// #cgo LDFLAGS: -L. -lcallbacks -llisteners
+// #cgo !windows CFLAGS: -DXKB_COMPOSE -DXKB_TEXT -DXKB_ATOMS -DXKB_VMOD -DXKB_MODIFIERS -DXKB_GLIB -DXKB_KEYMAP_FLAGS
+// #cgo !windows LDFLAGS: -lxkbcommon
 // #include "callbacks.h"
+// #include "listeners.h"
+// #ifndef _WIN32
+//   #include <xkbcommon/xkbcommon.h>
+// #endif
+import "C"
+
 import "C"
 import (
 	"log"
@@ -83,17 +91,4 @@ func touchHandleUpCallback(data unsafe.Pointer, touch *C.struct_wl_touch, serial
 	listenerData := (*touchListenerData)(data)
 	// Handle touch up event
 	log.Printf("listenerData: %#v", listenerData)
-}
-
-func initSeat(tinywl *tinywl) {
-	tinywl.seat = C.wl_registry_bind(tinywl.registry, C.uint32_t(tinywl.seat.id), &C.wl_seat_interface, 1)
-	C.wl_seat_add_listener(tinywl.seat, &C.seat_listener, unsafe.Pointer(tinywl))
-
-	// Retrieve capabilities
-	C.wl_pointer_add_listener(tinywl.pointer, &C.pointer_listener, unsafe.Pointer(tinywl))
-	C.wl_keyboard_add_listener(tinywl.keyboard, &C.keyboard_listener, unsafe.Pointer(tinywl))
-	C.wl_touch_add_listener(tinywl.touch, &C.touch_listener, unsafe.Pointer(tinywl))
-
-	// Set seat capabilities
-	C.wl_seat_set_capabilities(tinywl.seat, C.uint32_t(C.WL_SEAT_CAPABILITY_POINTER|C.WL_SEAT_CAPABILITY_KEYBOARD|C.WL_SEAT_CAPABILITY_TOUCH))
 }
