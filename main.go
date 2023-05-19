@@ -46,7 +46,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 	"unsafe"
 )
 
@@ -162,81 +161,37 @@ func initEGL(tinywl *tinywl) {
 }
 
 func main() {
-	tinywl := &tinywl{}
+	tinywl := newTinyWL()
 
-	// Connect to the Wayland display
-	tinywl.display = C.wl_display_connect(nil)
-	if tinywl.display == nil {
-		fmt.Println("Failed to connect to Wayland display")
-		os.Exit(1)
+	display := C.wl_display_connect(nil)
+	if display == nil {
+		log.Fatal("Failed to connect to Wayland display")
 	}
-	defer C.wl_display_disconnect(tinywl.display)
+	tinywl.display = display
 
-	// Retrieve the registry
-	tinywl.registry = C.wl_display_get_registry(tinywl.display)
-	if tinywl.registry == nil {
-		fmt.Println("Failed to get Wayland registry")
-		os.Exit(1)
-	}
-	git staC.wl_registry_add_listener(tinywl.registry, &C.registry_listener, unsafe.Pointer(tinywl))
+	tinywl.registry = C.wl_display_get_registry(display)
+	initRegistry(tinywl)
 
-	// Process events until the compositor is ready
-	C.wl_display_roundtrip(tinywl.display)
+	C.wl_display_roundtrip(display)
 
-	// Check if the compositor supports the required interfaces
-	if tinywl.compositor == nil || tinywl.shell == nil || tinywl.shm == nil {
-		fmt.Println("Required Wayland interfaces not available")
-		os.Exit(1)
+	// Make sure the compositor supports the required interfaces
+	if !tinywl.compositor || !tinywl.shell {
+		log.Fatal("Compositor or shell interface not available")
 	}
 
-	// Initialize EGL
-	initEGL(tinywl)
-
-	// Create a surface and shell surface
 	tinywl.surface = C.wl_compositor_create_surface(tinywl.compositor)
-	if tinywl.surface == nil {
-		fmt.Println("Failed to create Wayland surface")
-		os.Exit(1)
-	}
-	tinywl.shellSurface = C.wl_shell_get_shell_surface(tinywl.shell, tinywl.surface)
-	if tinywl.shellSurface == nil {
-		fmt.Println("Failed to get Wayland shell surface")
-		os.Exit(1)
-	}
-	C.wl_shell_surface_add_listener(tinywl.shellSurface, &C.shell_surface_listener, nil)
-	C.wl_shell_surface_set_toplevel(tinywl.shellSurface)
+	initShellSurface(tinywl, tinywl.surface)
 
-	// Create an EGL window
-	tinywl.eglWindow = C.wl_egl_window_create(tinywl.surface, 640, 480)
-	if tinywl.eglWindow == nil {
-		fmt.Println("Failed to create EGL window")
-		os.Exit(1)
-	}
-
-	// Initialize input devices
-	initSeat(tinywl)
-
-	// Set up signal handling
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc, os.Interrupt, os.Kill)
+	C.wl_display_roundtrip(display)
 
 	// Main event loop
-	running := true
-	for running {
-		select {
-		case <-sigc:
-			running = false
-		default:
-			C.wl_display_dispatch(tinywl.display)
-		}
+	for C.wl_display_dispatch(display) != -1 {
+		// Continue dispatching events
 	}
 
-	// Clean up resources
-	C.wl_egl_window_destroy(tinywl.eglWindow)
-	C.eglDestroyContext(tinywl.egl.display, tinywl.egl.context)
+	// Cleanup resources
 	C.wl_shell_surface_destroy(tinywl.shellSurface)
 	C.wl_surface_destroy(tinywl.surface)
-	C.wl_shell_destroy(tinywl.shell)
-	C.wl_compositor_destroy(tinywl.compositor)
 	C.wl_registry_destroy(tinywl.registry)
+	C.wl_display_disconnect(tinywl.display)
 }
